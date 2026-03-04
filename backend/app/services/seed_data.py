@@ -192,11 +192,23 @@ SAMPLE_QUESTIONS = [
 
 async def seed_database(db: AsyncSession):
     """Seed the database with subjects, topics, and sample questions."""
-    # Check if already seeded
+    # Check if already seeded with the full set of subjects
     result = await db.execute(select(Subject))
-    if result.scalars().first():
-        logger.info("Database already seeded, skipping.")
+    existing_subjects = result.scalars().all()
+    expected_subject_count = len(SUBJECT_TOPICS)
+    if len(existing_subjects) >= expected_subject_count:
+        logger.info("Database already seeded with all subjects, skipping.")
         return
+
+    # If partially seeded (stale data), clear and reseed
+    if existing_subjects:
+        logger.info(f"Found {len(existing_subjects)} subjects but expected {expected_subject_count}. Reseeding...")
+        from app.models.database import UserAttempt, WeakTopic, DailyMiningLog
+        await db.execute(select(UserAttempt).execution_options(synchronize_session="fetch"))
+        for model in [UserAttempt, WeakTopic, DailyMiningLog, Question, Topic, Subject]:
+            from sqlalchemy import delete
+            await db.execute(delete(model))
+        await db.commit()
 
     logger.info("Seeding database...")
 

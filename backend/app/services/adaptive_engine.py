@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.database import (
@@ -55,7 +55,7 @@ async def calculate_user_analytics(db: AsyncSession, user_id: str) -> dict:
             select(
                 func.count(UserAttempt.id).label("total"),
                 func.sum(
-                    func.case(
+                    case(
                         (UserAttempt.is_correct == True, 1),  # noqa: E712
                         else_=0,
                     )
@@ -84,7 +84,7 @@ async def calculate_user_analytics(db: AsyncSession, user_id: str) -> dict:
                 select(
                     func.count(UserAttempt.id).label("total"),
                     func.sum(
-                        func.case(
+                        case(
                             (UserAttempt.is_correct == True, 1),  # noqa: E712
                             else_=0,
                         )
