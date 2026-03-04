@@ -2,10 +2,12 @@
 import hashlib
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.database import Subject, Topic, Question
+from app.models.database import (
+    Subject, Topic, Question, UserAttempt, WeakTopic, DailyMiningLog,
+)
 from app.services.mining_engine import SUBJECT_TOPICS
 
 logger = logging.getLogger(__name__)
@@ -203,10 +205,7 @@ async def seed_database(db: AsyncSession):
     # If partially seeded (stale data), clear and reseed
     if existing_subjects:
         logger.info(f"Found {len(existing_subjects)} subjects but expected {expected_subject_count}. Reseeding...")
-        from app.models.database import UserAttempt, WeakTopic, DailyMiningLog
-        await db.execute(select(UserAttempt).execution_options(synchronize_session="fetch"))
         for model in [UserAttempt, WeakTopic, DailyMiningLog, Question, Topic, Subject]:
-            from sqlalchemy import delete
             await db.execute(delete(model))
         await db.commit()
 
