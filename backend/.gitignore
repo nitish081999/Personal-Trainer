@@ -1,0 +1,4 @@
+.env
+ssc_exam.db
+*.db
+__pycache__/
